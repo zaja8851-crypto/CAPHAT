@@ -1,6 +1,8 @@
 import { kv } from '@vercel/kv';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 const MESSAGES_KEY = 'capzone_messages';
 
 export async function GET() {

@@ -68,42 +68,70 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [orders, setOrders] = useState<Order[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
 
+  const [isLoaded, setIsLoaded] = useState(false);
+
   // Load from API on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [prodRes, orderRes, msgRes] = await Promise.all([
-          fetch('/api/products'),
-          fetch('/api/orders'),
-          fetch('/api/messages')
+          fetch('/api/products', { cache: 'no-store' }),
+          fetch('/api/orders', { cache: 'no-store' }),
+          fetch('/api/messages', { cache: 'no-store' })
         ]);
 
+        // Helper to safely parse local storage
+        const safeParseLocal = (key: string, setter: any) => {
+          try {
+            const saved = localStorage.getItem(key);
+            if (saved) setter(JSON.parse(saved));
+          } catch (e) {
+            console.error(`Failed to parse local storage for ${key}`, e);
+          }
+        };
+
+        // Load Products
         if (prodRes.ok) {
           const data = await prodRes.json();
           if (data && data.length > 0) setProducts(data);
-          else {
-            // Fallback to localStorage if API is empty but has local data
-            const saved = localStorage.getItem('capzone_products');
-            if (saved) setProducts(JSON.parse(saved));
-          }
+          else safeParseLocal('capzone_products', setProducts);
+        } else {
+          safeParseLocal('capzone_products', setProducts);
         }
+
+        // Load Orders
         if (orderRes.ok) {
           const data = await orderRes.json();
-          if (data) setOrders(data);
+          if (data && data.length > 0) setOrders(data);
+          else safeParseLocal('capzone_orders', setOrders);
+        } else {
+          safeParseLocal('capzone_orders', setOrders);
         }
+
+        // Load Messages
         if (msgRes.ok) {
           const data = await msgRes.json();
-          if (data) setMessages(data);
+          if (data && data.length > 0) setMessages(data);
+          else safeParseLocal('capzone_messages', setMessages);
+        } else {
+          safeParseLocal('capzone_messages', setMessages);
         }
       } catch (error) {
         console.error('Failed to fetch data from KV:', error);
-        // LocalStorage fallback
-        const savedProducts = localStorage.getItem('capzone_products');
-        const savedOrders = localStorage.getItem('capzone_orders');
-        const savedMessages = localStorage.getItem('capzone_messages');
-        if (savedProducts) setProducts(JSON.parse(savedProducts));
-        if (savedOrders) setOrders(JSON.parse(savedOrders));
-        if (savedMessages) setMessages(JSON.parse(savedMessages));
+        try {
+          const savedProducts = localStorage.getItem('capzone_products');
+          if (savedProducts) setProducts(JSON.parse(savedProducts));
+        } catch(e) {}
+        try {
+          const savedOrders = localStorage.getItem('capzone_orders');
+          if (savedOrders) setOrders(JSON.parse(savedOrders));
+        } catch(e) {}
+        try {
+          const savedMessages = localStorage.getItem('capzone_messages');
+          if (savedMessages) setMessages(JSON.parse(savedMessages));
+        } catch(e) {}
+      } finally {
+        setIsLoaded(true);
       }
     };
     fetchData();
@@ -111,33 +139,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Save to API whenever products change
   useEffect(() => {
-    localStorage.setItem('capzone_products', JSON.stringify(products));
+    if (!isLoaded) return;
+    try {
+      localStorage.setItem('capzone_products', JSON.stringify(products));
+    } catch(e) { console.error('Local storage error', e); }
+    
     fetch('/api/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(products)
     }).catch(err => console.error('Failed to save products to KV:', err));
-  }, [products]);
+  }, [products, isLoaded]);
 
   // Save to API whenever orders change
   useEffect(() => {
-    localStorage.setItem('capzone_orders', JSON.stringify(orders));
+    if (!isLoaded) return;
+    try {
+      localStorage.setItem('capzone_orders', JSON.stringify(orders));
+    } catch(e) { console.error('Local storage error', e); }
+
     fetch('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orders)
     }).catch(err => console.error('Failed to save orders to KV:', err));
-  }, [orders]);
+  }, [orders, isLoaded]);
 
   // Save to API whenever messages change
   useEffect(() => {
-    localStorage.setItem('capzone_messages', JSON.stringify(messages));
+    if (!isLoaded) return;
+    try {
+      localStorage.setItem('capzone_messages', JSON.stringify(messages));
+    } catch(e) { console.error('Local storage error', e); }
+
     fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(messages)
     }).catch(err => console.error('Failed to save messages to KV:', err));
-  }, [messages]);
+  }, [messages, isLoaded]);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
