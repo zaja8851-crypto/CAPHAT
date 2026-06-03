@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { useAppContext } from '@/context/AppContext';
-import { CreditCard, Truck, CheckCircle } from 'lucide-react';
+import { Truck, CheckCircle, Loader2 } from 'lucide-react';
 
 export default function CheckoutPage() {
   const { t, language, cart, cartTotal, addOrder, clearCart } = useAppContext();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -14,23 +15,49 @@ export default function CheckoutPage() {
     city: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Add order to context
-    addOrder({
+    if (isLoading) return;
+    setIsLoading(true);
+
+    const newOrder = {
+      id: Math.random().toString(36).substr(2, 9),
       items: cart,
       total: cartTotal,
+      date: new Date().toLocaleString(),
       customer: {
         name: formData.name,
         email: 'No Email Provided',
         phone: formData.phone,
         address: `${formData.address}, ${formData.city}`,
       },
-    });
+    };
 
-    clearCart();
-    setIsSubmitted(true);
+    try {
+      // 1) إضافة الطلب مباشرة في Vercel KV بشكل atomic (PATCH)
+      await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newOrder),
+      });
+    } catch (err) {
+      console.error('Failed to save order to KV:', err);
+    } finally {
+      // 2) تحديث الـ context (لـ localStorage كـ backup)
+      addOrder({
+        items: cart,
+        total: cartTotal,
+        customer: {
+          name: formData.name,
+          email: 'No Email Provided',
+          phone: formData.phone,
+          address: `${formData.address}, ${formData.city}`,
+        },
+      });
+      clearCart();
+      setIsLoading(false);
+      setIsSubmitted(true);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,9 +168,17 @@ export default function CheckoutPage() {
               </div>
               <button
                 type="submit"
-                className="w-full py-6 bg-orange-600 text-white rounded-[1.5rem] font-black text-xl hover:bg-orange-700 transition-all shadow-xl shadow-orange-600/20"
+                disabled={isLoading}
+                className="w-full py-6 bg-orange-600 text-white rounded-[1.5rem] font-black text-xl hover:bg-orange-700 transition-all shadow-xl shadow-orange-600/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3"
               >
-                {language === 'ar' ? 'تأكيد الطلب' : 'Confirm Order'}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    {language === 'ar' ? 'جاري الحفظ...' : 'Saving...'}
+                  </>
+                ) : (
+                  language === 'ar' ? 'تأكيد الطلب' : 'Confirm Order'
+                )}
               </button>
             </div>
           </div>
