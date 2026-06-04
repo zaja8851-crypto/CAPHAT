@@ -1,11 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Language, translations } from '@/translations';
 import { Product, products as initialProducts } from '@/data/products';
 
 // ─── Module-level cache (persists across page navigations) ───
 const CACHE_TTL = 60_000; // 60 seconds
+let _isFetching = false;  // prevent duplicate simultaneous fetches
 const _cache: {
   products?: { data: Product[]; ts: number };
   orders?: { data: any[]; ts: number };
@@ -88,7 +89,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch (e) {}
     };
 
-    // ── Step 1: show cached or localStorage data IMMEDIATELY (no spinner) ──
+    // ── Step 1: show data immediately from cache or localStorage ──
     if (_cache.products && now - _cache.products.ts < CACHE_TTL) {
       setProducts(_cache.products.data);
     } else {
@@ -106,13 +107,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     setIsLoaded(true);
 
-    // ── Step 2: refresh from KV in background only if cache is stale ──
+    // ── Step 2: refresh from KV only if cache is stale and not already fetching ──
     const needsRefresh =
       !_cache.products || now - _cache.products.ts >= CACHE_TTL ||
       !_cache.orders   || now - _cache.orders.ts   >= CACHE_TTL ||
       !_cache.messages || now - _cache.messages.ts >= CACHE_TTL;
 
-    if (!needsRefresh) return;
+    if (!needsRefresh || _isFetching) return;
+    _isFetching = true;
 
     const fetchData = async () => {
       try {
@@ -124,23 +126,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         if (prodRes.ok) {
           const data = await prodRes.json();
-          if (data && data.length > 0) {
+          if (Array.isArray(data) && data.length > 0) {
             _cache.products = { data, ts: Date.now() };
             setProducts(data);
           }
         }
         if (orderRes.ok) {
           const data = await orderRes.json();
-          _cache.orders = { data, ts: Date.now() };
-          if (data && data.length > 0) setOrders(data);
+          if (Array.isArray(data)) {
+            _cache.orders = { data, ts: Date.now() };
+            if (data.length > 0) setOrders(data);
+          }
         }
         if (msgRes.ok) {
           const data = await msgRes.json();
-          _cache.messages = { data, ts: Date.now() };
-          if (data && data.length > 0) setMessages(data);
+          if (Array.isArray(data)) {
+            _cache.messages = { data, ts: Date.now() };
+            if (data.length > 0) setMessages(data);
+          }
         }
       } catch (error) {
         console.error('Background refresh failed:', error);
+      } finally {
+        _isFetching = false;
       }
     };
     fetchData();
