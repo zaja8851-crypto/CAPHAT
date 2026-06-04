@@ -9,9 +9,10 @@ import { ShoppingCart } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
+  priority?: boolean;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, priority = false }) => {
   const { language, t, addToCart } = useAppContext();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -24,6 +25,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <div className="group relative bg-white rounded-2xl overflow-hidden border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
       <Link
         href={`/product/${product.id}`}
+        prefetch={true}
         className="block aspect-[4/5] relative overflow-hidden bg-slate-50"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -33,6 +35,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           src={mainImage}
           alt={name}
           fill
+          priority={priority}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           className={`object-cover transition-all duration-500 ${
             isHovered && hasSecondImage
               ? 'opacity-0 scale-105'
@@ -45,6 +49,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             src={secondImage}
             alt={`${name} - 2`}
             fill
+            loading="lazy"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className={`object-cover absolute inset-0 transition-all duration-500 ${
               isHovered
                 ? 'opacity-100 scale-100'
@@ -81,7 +87,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       
       <div className="p-4 sm:p-6">
         <div className="flex justify-between items-start mb-2">
-          <Link href={`/product/${product.id}`} className="block">
+          <Link href={`/product/${product.id}`} prefetch={true} className="block">
             <h3 className="text-sm font-bold text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-1">
               {name}
             </h3>
@@ -110,3 +116,4 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     </div>
   );
 };
+
