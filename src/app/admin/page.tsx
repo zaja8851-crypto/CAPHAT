@@ -15,28 +15,38 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'add' | 'messages'>('products');
   const [editingProduct, setEditingProduct] = useState<any>(null);
 
-  // Helper to compress image before saving to localStorage
+  // Helper to compress image before saving to Vercel KV
   const compressImage = (base64: string): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.src = base64;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800;
+        const MAX_DIM = 600; // Constrain maximum dimension to 600px (width or height)
         let width = img.width;
         let height = img.height;
 
-        if (width > MAX_WIDTH) {
-          height *= MAX_WIDTH / width;
-          width = MAX_WIDTH;
+        if (width > height) {
+          if (width > MAX_DIM) {
+            height *= MAX_DIM / width;
+            width = MAX_DIM;
+          }
+        } else {
+          if (height > MAX_DIM) {
+            width *= MAX_DIM / height;
+            height = MAX_DIM;
+          }
         }
 
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-        // Compress to 70% quality JPG
-        resolve(canvas.toDataURL('image/jpeg', 0.7));
+        // Compress to 60% quality JPG for a very small file size
+        resolve(canvas.toDataURL('image/jpeg', 0.6));
+      };
+      img.onerror = () => {
+        resolve(base64); // fallback if error loading image
       };
     });
   };
