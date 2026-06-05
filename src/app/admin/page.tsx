@@ -5,7 +5,10 @@ import { useAppContext } from '@/context/AppContext';
 import { Plus, Edit2, Package, Users, ShoppingBag, LayoutDashboard, DollarSign, X, Trash2, MessageCircle, MapPin, Phone, Mail } from 'lucide-react';
 
 export default function AdminPage() {
-  const { products, addProduct, removeProduct, updateProductPrice, updateProductImages, orders, removeOrder, messages, removeMessage } = useAppContext();
+  const { 
+    products, addProduct, removeProduct, updateProductPrice, updateProductImages, 
+    orders, removeOrder, messages, removeMessage, fetchAdminData 
+  } = useAppContext();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -50,6 +53,12 @@ export default function AdminPage() {
     newArrival: true,
     promotion: false,
   });
+
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      fetchAdminData();
+    }
+  }, [isAuthenticated, fetchAdminData]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();

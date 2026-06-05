@@ -66,6 +66,7 @@ interface AppContextType {
   messages: Message[];
   addMessage: (message: Omit<Message, 'id' | 'date'>) => void;
   removeMessage: (id: string) => void;
+  fetchAdminData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -79,7 +80,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load from API on mount – with module-level cache to avoid refetch on navigation
+  // Load products from API on mount – with module-level cache to avoid refetch on navigation
   useEffect(() => {
     const now = Date.now();
     const safeParseLocal = (key: string, setter: any) => {
@@ -89,112 +90,88 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch (e) {}
     };
 
-    // ── Step 1: show data immediately from cache or localStorage ──
+    // ── Step 1: show products immediately from cache or localStorage ──
     if (_cache.products && now - _cache.products.ts < CACHE_TTL) {
       setProducts(_cache.products.data);
     } else {
       safeParseLocal('capzone_products', setProducts);
     }
-    if (_cache.orders && now - _cache.orders.ts < CACHE_TTL) {
-      setOrders(_cache.orders.data);
-    } else {
-      safeParseLocal('capzone_orders', setOrders);
-    }
-    if (_cache.messages && now - _cache.messages.ts < CACHE_TTL) {
-      setMessages(_cache.messages.data);
-    } else {
-      safeParseLocal('capzone_messages', setMessages);
-    }
+
+    // Load local storage backups if available
+    safeParseLocal('capzone_orders', setOrders);
+    safeParseLocal('capzone_messages', setMessages);
     setIsLoaded(true);
 
-    // ── Step 2: refresh from KV only if cache is stale and not already fetching ──
-    const needsRefresh =
-      !_cache.products || now - _cache.products.ts >= CACHE_TTL ||
-      !_cache.orders   || now - _cache.orders.ts   >= CACHE_TTL ||
-      !_cache.messages || now - _cache.messages.ts >= CACHE_TTL;
+    // ── Step 2: refresh products from KV only if cache is stale and not already fetching ──
+    const needsRefresh = !_cache.products || now - _cache.products.ts >= CACHE_TTL;
 
     if (!needsRefresh || _isFetching) return;
     _isFetching = true;
 
-    const fetchData = async () => {
+    const fetchProducts = async () => {
       try {
-        const [prodRes, orderRes, msgRes] = await Promise.all([
-          fetch('/api/products'),
-          fetch('/api/orders'),
-          fetch('/api/messages'),
-        ]);
-
+        const prodRes = await fetch('/api/products');
         if (prodRes.ok) {
           const data = await prodRes.json();
           if (Array.isArray(data) && data.length > 0) {
             _cache.products = { data, ts: Date.now() };
             setProducts(data);
-          }
-        }
-        if (orderRes.ok) {
-          const data = await orderRes.json();
-          if (Array.isArray(data)) {
-            _cache.orders = { data, ts: Date.now() };
-            if (data.length > 0) setOrders(data);
-          }
-        }
-        if (msgRes.ok) {
-          const data = await msgRes.json();
-          if (Array.isArray(data)) {
-            _cache.messages = { data, ts: Date.now() };
-            if (data.length > 0) setMessages(data);
+            try {
+              localStorage.setItem('capzone_products', JSON.stringify(data));
+            } catch (e) {}
           }
         }
       } catch (error) {
-        console.error('Background refresh failed:', error);
+        console.error('Products refresh failed:', error);
       } finally {
         _isFetching = false;
       }
     };
-    fetchData();
+    fetchProducts();
   }, []);
 
-  // Save to API whenever products change
-  useEffect(() => {
-    if (!isLoaded) return;
-    _cache.products = { data: products, ts: Date.now() };
+  const saveProductsToKV = (updatedProducts: Product[]) => {
+    _cache.products = { data: updatedProducts, ts: Date.now() };
     try {
-      localStorage.setItem('capzone_products', JSON.stringify(products));
-    } catch(e) {}
+      localStorage.setItem('capzone_products', JSON.stringify(updatedProducts));
+    } catch (e) {}
     fetch('/api/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(products)
+      body: JSON.stringify(updatedProducts)
     }).catch(err => console.error('Failed to save products to KV:', err));
-  }, [products, isLoaded]);
+  };
 
-  // Save to API whenever orders change
-  useEffect(() => {
-    if (!isLoaded) return;
-    _cache.orders = { data: orders, ts: Date.now() };
+  const fetchAdminData = async () => {
     try {
-      localStorage.setItem('capzone_orders', JSON.stringify(orders));
-    } catch(e) {}
-    fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orders)
-    }).catch(err => console.error('Failed to save orders to KV:', err));
-  }, [orders, isLoaded]);
-
-  // Save to API whenever messages change
-  useEffect(() => {
-    if (!isLoaded) return;
-    _cache.messages = { data: messages, ts: Date.now() };
-    try {
-      localStorage.setItem('capzone_messages', JSON.stringify(messages));
-    } catch(e) {}
-    fetch('/api/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(messages)
-    }).catch(err => console.error('Failed to save messages to KV:', err));
-  }, [messages, isLoaded]);
+      const [orderRes, msgRes] = await Promise.all([
+        fetch('/api/orders'),
+        fetch('/api/messages'),
+      ]);
+      if (orderRes.ok) {
+        const data = await orderRes.json();
+        if (Array.isArray(data)) {
+          _cache.orders = { data, ts: Date.now() };
+          setOrders(data);
+          try {
+            localStorage.setItem('capzone_orders', JSON.stringify(data));
+          } catch (e) {}
+        }
+      }
+      if (msgRes.ok) {
+        const data = await msgRes.json();
+        if (Array.isArray(data)) {
+          _cache.messages = { data, ts: Date.now() };
+          setMessages(data);
+          try {
+            localStorage.setItem('capzone_messages', JSON.stringify(data));
+          } catch (e) {}
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch admin data:', error);
+    }
+  };
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
@@ -235,18 +212,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const clearCart = () => setCart([]);
 
-  const addProduct = (product: Product) => setProducts(prev => [...prev, product]);
+  const addProduct = (product: Product) => {
+    setProducts(prev => {
+      const updated = [...prev, product];
+      saveProductsToKV(updated);
+      return updated;
+    });
+  };
   
   const removeProduct = (productId: string) => {
-    setProducts(prev => prev.filter(p => p.id !== productId));
+    setProducts(prev => {
+      const updated = prev.filter(p => p.id !== productId);
+      saveProductsToKV(updated);
+      return updated;
+    });
   };
 
   const updateProductPrice = (productId: string, newPrice: number) => {
-    setProducts(prev => prev.map(p => p.id === productId ? { ...p, price: newPrice } : p));
+    setProducts(prev => {
+      const updated = prev.map(p => p.id === productId ? { ...p, price: newPrice } : p);
+      saveProductsToKV(updated);
+      return updated;
+    });
   };
 
   const updateProductImages = (productId: string, newImages: string[]) => {
-    setProducts(prev => prev.map(p => p.id === productId ? { ...p, image: newImages[0] || '', images: newImages } : p));
+    setProducts(prev => {
+      const updated = prev.map(p => p.id === productId ? { ...p, image: newImages[0] || '', images: newImages } : p);
+      saveProductsToKV(updated);
+      return updated;
+    });
   };
 
   const addOrder = (orderData: Omit<Order, 'id' | 'date'>) => {
@@ -255,11 +250,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: Math.random().toString(36).substr(2, 9),
       date: new Date().toLocaleString(),
     };
-    setOrders(prev => [newOrder, ...prev]);
+    setOrders(prev => {
+      const updated = [newOrder, ...prev];
+      _cache.orders = { data: updated, ts: Date.now() };
+      try {
+        localStorage.setItem('capzone_orders', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
   };
 
   const removeOrder = (id: string) => {
-    setOrders(prev => prev.filter(o => o.id !== id));
+    setOrders(prev => {
+      const updated = prev.filter(o => o.id !== id);
+      _cache.orders = { data: updated, ts: Date.now() };
+      try {
+        localStorage.setItem('capzone_orders', JSON.stringify(updated));
+      } catch (e) {}
+      fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      }).catch(err => console.error('Failed to save orders to KV:', err));
+      return updated;
+    });
   };
 
   const addMessage = (messageData: Omit<Message, 'id' | 'date'>) => {
@@ -268,11 +282,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: Math.random().toString(36).substr(2, 9),
       date: new Date().toLocaleString(),
     };
-    setMessages(prev => [newMessage, ...prev]);
+    setMessages(prev => {
+      const updated = [newMessage, ...prev];
+      _cache.messages = { data: updated, ts: Date.now() };
+      try {
+        localStorage.setItem('capzone_messages', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    // Send single message to KV atomically via PATCH
+    fetch('/api/messages', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newMessage)
+    }).catch(err => console.error('Failed to save message to KV:', err));
   };
 
   const removeMessage = (id: string) => {
-    setMessages(prev => prev.filter(m => m.id !== id));
+    setMessages(prev => {
+      const updated = prev.filter(m => m.id !== id);
+      _cache.messages = { data: updated, ts: Date.now() };
+      try {
+        localStorage.setItem('capzone_messages', JSON.stringify(updated));
+      } catch (e) {}
+      fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      }).catch(err => console.error('Failed to save messages to KV:', err));
+      return updated;
+    });
   };
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -308,6 +348,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         messages,
         addMessage,
         removeMessage,
+        fetchAdminData,
       }}
     >
       {children}

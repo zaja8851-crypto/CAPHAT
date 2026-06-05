@@ -23,3 +23,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to save messages' }, { status: 500 });
   }
 }
+
+// PATCH: إضافة رسالة واحدة مباشرةً للقائمة (atomic)
+export async function PATCH(request: Request) {
+  try {
+    const newMessage = await request.json();
+    const existing = (await kv.get<any[]>(MESSAGES_KEY)) || [];
+    const updated = [newMessage, ...existing];
+    await kv.set(MESSAGES_KEY, updated);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to add message' }, { status: 500 });
+  }
+}
+
