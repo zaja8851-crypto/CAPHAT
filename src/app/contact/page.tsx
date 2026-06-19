@@ -5,7 +5,7 @@ import { useAppContext } from '@/context/AppContext';
 import { Mail, Phone, MapPin, Globe, Link as LinkIcon, Share2, MessageCircle } from 'lucide-react';
 
 export default function ContactPage() {
-  const { t, language, addMessage } = useAppContext();
+  const { t, language, addMessage, whatsappNumber } = useAppContext();
   const [sent, setSent] = React.useState(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -42,7 +42,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">WhatsApp</h3>
-                  <a href="https://wa.me/212643553936" target="_blank" rel="noopener noreferrer" className="text-xl font-bold text-slate-900 hover:text-green-600 transition-colors">0643553936</a>
+                  <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="text-xl font-bold text-slate-900 hover:text-green-600 transition-colors">+{whatsappNumber}</a>
                 </div>
               </div>
               <div className="flex items-start gap-6">
@@ -60,7 +60,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">Phone</h3>
-                  <a href="tel:0643553936" className="text-xl font-bold text-slate-900 hover:text-orange-600 transition-colors">0643553936</a>
+                  <a href={`tel:+${whatsappNumber}`} className="text-xl font-bold text-slate-900 hover:text-orange-600 transition-colors">+{whatsappNumber}</a>
                 </div>
               </div>
             </div>

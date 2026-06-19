@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Language, translations } from '@/translations';
 import { Product, products as initialProducts } from '@/data/products';
 
@@ -56,6 +56,7 @@ interface AppContextType {
   // Admin stuff
   products: Product[];
   addProduct: (product: Product) => void;
+  updateProduct: (product: Product) => void;
   removeProduct: (productId: string) => void;
   updateProductPrice: (productId: string, newPrice: number) => void;
   updateProductImages: (productId: string, newImages: string[]) => void;
@@ -67,6 +68,7 @@ interface AppContextType {
   addMessage: (message: Omit<Message, 'id' | 'date'>) => void;
   removeMessage: (id: string) => void;
   fetchAdminData: () => Promise<void>;
+  whatsappNumber: string;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -77,6 +79,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [orders, setOrders] = useState<Order[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -130,16 +133,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     fetchProducts();
   }, []);
 
-  const saveProductsToKV = (updatedProducts: Product[]) => {
+  const saveProductsToKV = (updatedProducts: Product[], immediate = false) => {
     _cache.products = { data: updatedProducts, ts: Date.now() };
     try {
       localStorage.setItem('capzone_products', JSON.stringify(updatedProducts));
     } catch (e) {}
-    fetch('/api/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedProducts)
-    }).catch(err => console.error('Failed to save products to KV:', err));
+
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    
+    if (immediate) {
+      fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProducts)
+      }).catch(err => console.error('Failed to save products to KV:', err));
+    } else {
+      saveTimeoutRef.current = setTimeout(() => {
+        fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedProducts)
+        }).catch(err => console.error('Failed to save products to KV:', err));
+      }, 1000);
+    }
   };
 
   const fetchAdminData = async () => {
@@ -215,7 +231,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addProduct = (product: Product) => {
     setProducts(prev => {
       const updated = [...prev, product];
-      saveProductsToKV(updated);
+      saveProductsToKV(updated, true);
+      return updated;
+    });
+  };
+
+  const updateProduct = (updatedProduct: Product) => {
+    setProducts(prev => {
+      const updated = prev.map(p => p.id === updatedProduct.id ? updatedProduct : p);
+      saveProductsToKV(updated, true);
       return updated;
     });
   };
@@ -223,7 +247,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const removeProduct = (productId: string) => {
     setProducts(prev => {
       const updated = prev.filter(p => p.id !== productId);
-      saveProductsToKV(updated);
+      saveProductsToKV(updated, true);
       return updated;
     });
   };
@@ -239,7 +263,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateProductImages = (productId: string, newImages: string[]) => {
     setProducts(prev => {
       const updated = prev.map(p => p.id === productId ? { ...p, image: newImages[0] || '', images: newImages } : p);
-      saveProductsToKV(updated);
+      saveProductsToKV(updated, true);
       return updated;
     });
   };
@@ -267,11 +291,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         localStorage.setItem('capzone_orders', JSON.stringify(updated));
       } catch (e) {}
-      fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated)
-      }).catch(err => console.error('Failed to save orders to KV:', err));
+      fetch(`/api/orders?id=${id}`, {
+        method: 'DELETE',
+      }).catch(err => console.error('Failed to delete order from KV:', err));
       return updated;
     });
   };
@@ -306,11 +328,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         localStorage.setItem('capzone_messages', JSON.stringify(updated));
       } catch (e) {}
-      fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated)
-      }).catch(err => console.error('Failed to save messages to KV:', err));
+      fetch(`/api/messages?id=${id}`, {
+        method: 'DELETE',
+      }).catch(err => console.error('Failed to delete message from KV:', err));
       return updated;
     });
   };
@@ -339,6 +359,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         cartTotal,
         products,
         addProduct,
+        updateProduct,
         removeProduct,
         updateProductPrice,
         updateProductImages,
@@ -349,6 +370,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addMessage,
         removeMessage,
         fetchAdminData,
+        whatsappNumber: '212643553936',
       }}
     >
       {children}

@@ -6,7 +6,7 @@ import { Plus, Edit2, Package, Users, ShoppingBag, LayoutDashboard, DollarSign, 
 
 export default function AdminPage() {
   const { 
-    products, addProduct, removeProduct, updateProductPrice, updateProductImages, 
+    products, addProduct, updateProduct, removeProduct, updateProductPrice, updateProductImages, 
     orders, removeOrder, messages, removeMessage, fetchAdminData 
   } = useAppContext();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -137,9 +137,7 @@ export default function AdminPage() {
         newArrival: (newProduct as any).newArrival,
         promotion: (newProduct as any).promotion,
       };
-      
-      removeProduct(editingProduct.id);
-      addProduct(updatedProduct);
+      updateProduct(updatedProduct);
       
       alert('Product updated successfully!');
     } else {

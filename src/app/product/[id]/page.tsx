@@ -5,12 +5,12 @@ import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useAppContext } from '@/context/AppContext';
 import { products } from '@/data/products';
-import { Star, ShoppingCart, CreditCard, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Star, ChevronRight, ChevronLeft, MessageCircle } from 'lucide-react';
 
 export default function ProductPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { t, language, addToCart, products } = useAppContext();
+  const { t, language, products, whatsappNumber } = useAppContext();
   const product = products.find(p => p.id === id);
 
   const [selectedColor, setSelectedColor] = useState(product?.colors[0]);
@@ -25,9 +25,24 @@ export default function ProductPage() {
   const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
   const productImages = product.images || [product.image];
 
-  const handleBuyNow = () => {
-    addToCart(product, quantity, selectedColor, selectedSize);
-    router.push('/checkout');
+  const handleOrderWhatsApp = () => {
+    const url = window.location.href;
+    let message = '';
+    
+    let optionsText = '';
+    if (selectedColor) optionsText += `\n- ${language === 'ar' ? 'اللون' : language === 'fr' ? 'Couleur' : 'Color'}: ${selectedColor}`;
+    if (selectedSize) optionsText += `\n- ${language === 'ar' ? 'المقاس' : language === 'fr' ? 'Taille' : 'Size'}: ${selectedSize}`;
+    
+    if (language === 'ar') {
+      message = `السلام عليكم، أريد طلب هذا المنتج:\n- المنتج: ${name}\n- السعر: ${product.price} MAD\n- الكمية: ${quantity}${optionsText}\n- الرابط: ${url}`;
+    } else if (language === 'fr') {
+      message = `Bonjour, je souhaite commander ce produit :\n- Produit : ${name}\n- Prix : ${product.price} MAD\n- Quantité : ${quantity}${optionsText}\n- Lien : ${url}`;
+    } else {
+      message = `Hello, I would like to order this product:\n- Product: ${name}\n- Price: ${product.price} MAD\n- Quantity: ${quantity}${optionsText}\n- Link: ${url}`;
+    }
+    
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   return (
@@ -160,6 +175,54 @@ export default function ProductPage() {
               {description}
             </p>
 
+            {/* Colors Selector */}
+            {product.colors && product.colors.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-sm font-black text-slate-900 mb-3 uppercase tracking-wider">
+                  {t.product.selectColor}
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {product.colors.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
+                      className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all ${
+                        selectedColor === color
+                          ? 'border-orange-600 bg-orange-50 text-orange-600 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sizes Selector */}
+            {product.sizes && product.sizes.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-sm font-black text-slate-900 mb-3 uppercase tracking-wider">
+                  {t.cart.selectSize}
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {product.sizes.map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all ${
+                        selectedSize === size
+                          ? 'border-orange-600 bg-orange-50 text-orange-600 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Quantity */}
             <div className="flex items-center space-x-6 rtl:space-x-reverse mb-10">
               <div className="flex items-center border border-slate-200 rounded-2xl p-1 bg-slate-50">
@@ -180,20 +243,13 @@ export default function ProductPage() {
             </div>
 
             {/* Actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="mt-4">
               <button
-                onClick={() => addToCart(product, quantity, selectedColor, selectedSize)}
-                className="flex items-center justify-center space-x-3 rtl:space-x-reverse bg-slate-900 text-white py-5 rounded-[1.5rem] font-black hover:bg-slate-800 transition-all transform active:scale-95"
+                onClick={handleOrderWhatsApp}
+                className="w-full flex items-center justify-center space-x-3 rtl:space-x-reverse bg-green-600 text-white py-5 rounded-[1.5rem] font-black hover:bg-green-700 transition-all transform active:scale-95 shadow-xl shadow-green-600/20 text-lg"
               >
-                <ShoppingCart className="w-6 h-6" />
-                <span>{t.cart.add}</span>
-              </button>
-              <button
-                onClick={handleBuyNow}
-                className="flex items-center justify-center space-x-3 rtl:space-x-reverse bg-green-600 text-white py-5 rounded-[1.5rem] font-black hover:bg-green-700 transition-all transform active:scale-95 shadow-xl shadow-green-600/20"
-              >
-                <CreditCard className="w-6 h-6" />
-                <span>{t.cart.buyNow}</span>
+                <MessageCircle className="w-6 h-6" />
+                <span>{t.cart.orderWhatsApp}</span>
               </button>
             </div>
           </div>

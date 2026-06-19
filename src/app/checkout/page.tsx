@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/context/AppContext';
 import { Truck, CheckCircle, Loader2 } from 'lucide-react';
 
@@ -14,6 +15,13 @@ export default function CheckoutPage() {
     address: '',
     city: '',
   });
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/');
+  }, [router]);
+
+  return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

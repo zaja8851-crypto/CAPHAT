@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 import { Product } from '@/data/products';
-import { ShoppingCart } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -13,7 +13,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, priority = false }) => {
-  const { language, t, addToCart } = useAppContext();
+  const { language, t, whatsappNumber } = useAppContext();
   const [isHovered, setIsHovered] = useState(false);
 
   const name = language === 'ar' ? product.nameAr : product.nameEn;
@@ -106,11 +106,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, priority = fa
         </div>
 
         <button
-          onClick={() => addToCart(product, 1)}
-          className="mt-4 w-full flex items-center justify-center space-x-2 rtl:space-x-reverse bg-slate-900 text-white py-3 rounded-xl text-xs font-bold hover:bg-orange-600 transition-colors"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const url = `${window.location.origin}/product/${product.id}`;
+            let message = '';
+            if (language === 'ar') {
+              message = `السلام عليكم، أريد طلب هذا المنتج:\n- المنتج: ${name}\n- السعر: ${product.price} MAD\n- الرابط: ${url}`;
+            } else if (language === 'fr') {
+              message = `Bonjour, je souhaite commander ce produit :\n- Produit : ${name}\n- Prix : ${product.price} MAD\n- Lien : ${url}`;
+            } else {
+              message = `Hello, I would like to order this product:\n- Product: ${name}\n- Price: ${product.price} MAD\n- Link: ${url}`;
+            }
+            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+          }}
+          className="mt-4 w-full flex items-center justify-center space-x-2 rtl:space-x-reverse bg-green-600 text-white py-3 rounded-xl text-xs font-bold hover:bg-green-700 transition-colors shadow-lg shadow-green-600/20"
         >
-          <ShoppingCart className="w-4 h-4" />
-          <span>{t.cart.add}</span>
+          <MessageCircle className="w-4 h-4" />
+          <span>{t.cart.orderWhatsApp}</span>
         </button>
       </div>
     </div>

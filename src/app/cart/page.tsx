@@ -1,13 +1,21 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 import { Trash2, ArrowLeft, ArrowRight } from 'lucide-react';
 
 export default function CartPage() {
   const { t, language, cart, removeFromCart, updateQuantity, cartTotal } = useAppContext();
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/');
+  }, [router]);
+
+  return null;
 
   if (cart.length === 0) {
     return (

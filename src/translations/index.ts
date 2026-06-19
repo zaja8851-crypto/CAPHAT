@@ -39,6 +39,8 @@ export const translations = {
       checkout: 'Checkout',
       add: 'Add to Cart',
       buyNow: 'Buy Now',
+      orderWhatsApp: 'Order via WhatsApp',
+      selectSize: 'Select Size',
     },
     shop: {
       filters: 'Filters',
@@ -100,6 +102,8 @@ export const translations = {
       checkout: 'الدفع',
       add: 'إضافة للسلة',
       buyNow: 'شراء الآن',
+      orderWhatsApp: 'اطلب عبر الواتساب',
+      selectSize: 'اختر المقاس',
     },
     shop: {
       filters: 'الفلاتر',
@@ -161,6 +165,8 @@ export const translations = {
       checkout: 'Paiement',
       add: 'Ajouter au Panier',
       buyNow: 'Acheter Maintenant',
+      orderWhatsApp: 'Commander via WhatsApp',
+      selectSize: 'Choisir la Taille',
     },
     shop: {
       filters: 'Filtres',

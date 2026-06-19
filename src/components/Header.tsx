@@ -53,6 +53,7 @@ export const Header: React.FC = () => {
               </div>
             )}
 
+            {/* Cart Link Disabled for WhatsApp Ordering
             <Link href="/cart" className="p-3 rounded-2xl hover:bg-slate-100 transition-colors relative">
               <ShoppingCart className="w-6 h-6 text-slate-600" />
               {cartCount > 0 && (
@@ -61,6 +62,7 @@ export const Header: React.FC = () => {
                 </span>
               )}
             </Link>
+            */}
           </div>
 
           {/* Logo (Center) */}
