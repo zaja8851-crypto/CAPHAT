@@ -76,7 +76,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>('ar');
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -116,7 +116,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const prodRes = await fetch('/api/products');
         if (prodRes.ok) {
           const data = await prodRes.json();
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
             _cache.products = { data, ts: Date.now() };
             setProducts(data);
             try {
@@ -135,26 +135,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const saveProductsToKV = (updatedProducts: Product[], immediate = false) => {
     _cache.products = { data: updatedProducts, ts: Date.now() };
+    // Reset cache timestamp to 0 so next page load always re-fetches from KV
+    // (we update _cache.products.data immediately so the UI stays correct,
+    //  but force a server re-read on next mount by expiring the timestamp)
+    _isFetching = false;
     try {
       localStorage.setItem('capzone_products', JSON.stringify(updatedProducts));
     } catch (e) {}
 
+    const doSave = () => fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedProducts)
+    }).then(async (res) => {
+      if (!res.ok) throw new Error('Save failed');
+      // After confirmed save, expire cache so next mount re-reads fresh data
+      if (_cache.products) _cache.products.ts = 0;
+    }).catch(err => {
+      console.error('Failed to save products to KV:', err);
+      // Also expire cache on error to force re-read
+      if (_cache.products) _cache.products.ts = 0;
+    });
+
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    
     if (immediate) {
-      fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedProducts)
-      }).catch(err => console.error('Failed to save products to KV:', err));
+      doSave();
     } else {
-      saveTimeoutRef.current = setTimeout(() => {
-        fetch('/api/products', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedProducts)
-        }).catch(err => console.error('Failed to save products to KV:', err));
-      }, 1000);
+      saveTimeoutRef.current = setTimeout(doSave, 1000);
     }
   };
 
