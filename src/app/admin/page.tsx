@@ -283,27 +283,20 @@ export default function AdminPage() {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-bold text-slate-900 text-sm">{p.nameEn}</h3>
-                        <label className="text-[9px] text-orange-600 font-bold cursor-pointer hover:underline block">
-                          Change Main
-                          <input 
-                            type="file" 
-                            className="hidden" 
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const reader = new FileReader();
-                                reader.onloadend = async () => {
-                                  const compressed = await compressImage(reader.result as string);
-                                  const newImages = [...(p.images || [])];
-                                  newImages[0] = compressed;
-                                  updateProductImages(p.id, newImages);
-                                };
-                                reader.readAsDataURL(file);
-                              }
-                            }}
-                          />
-                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const url = prompt('أدخل الرابط المباشر (Direct Link) للصورة الرئيسية:');
+                            if (url && url.trim()) {
+                              const newImages = [...(p.images || [])];
+                              newImages[0] = url.trim();
+                              updateProductImages(p.id, newImages);
+                            }
+                          }}
+                          className="text-[9px] text-orange-600 font-bold hover:underline block text-left"
+                        >
+                          تغيير الرابط
+                        </button>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3 rtl:space-x-reverse">
@@ -317,27 +310,20 @@ export default function AdminPage() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <label className="text-[9px] text-slate-500 font-bold cursor-pointer hover:underline block">
-                          {p.images && p.images[1] ? 'Change Hover' : 'Add Hover Image'}
-                          <input 
-                            type="file" 
-                            className="hidden" 
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const reader = new FileReader();
-                                reader.onloadend = async () => {
-                                  const compressed = await compressImage(reader.result as string);
-                                  const newImages = [...(p.images || [])];
-                                  newImages[1] = compressed;
-                                  updateProductImages(p.id, newImages);
-                                };
-                                reader.readAsDataURL(file);
-                              }
-                            }}
-                          />
-                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const url = prompt('أدخل الرابط المباشر (Direct Link) للصورة الثانية:');
+                            if (url && url.trim()) {
+                              const newImages = [...(p.images || [])];
+                              newImages[1] = url.trim();
+                              updateProductImages(p.id, newImages);
+                            }
+                          }}
+                          className="text-[9px] text-slate-500 font-bold hover:underline block text-left"
+                        >
+                          {p.images && p.images[1] ? 'تغيير صورة Hover' : 'إضافة صورة Hover'}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -635,94 +621,69 @@ export default function AdminPage() {
                   </label>
                 </div>
               
-              {/* Images */}
-              <div className="space-y-4">
-                <label className="text-xs font-black uppercase text-slate-400 ml-1">Product Images</label>
+              {/* Images via URL */}
+              <div className="space-y-6">
+                <label className="text-xs font-black uppercase text-slate-400 ml-1">Product Images (Direct URL)</label>
+                <p className="text-xs text-slate-400 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4">
+                  ارفع صورتك على موقع مثل <a href="https://imgbb.com" target="_blank" rel="noopener noreferrer" className="text-orange-600 font-bold underline">imgbb.com</a> أو <a href="https://postimages.org" target="_blank" rel="noopener noreferrer" className="text-orange-600 font-bold underline">postimages.org</a> ثم انسخ رابط <strong>Lien direct</strong> والصقه هنا.
+                </p>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Image 1 */}
                   <div className="space-y-3">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase text-center">Image 1 (Main Product) *</p>
-                    {!newProduct.image ? (
-                      <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-slate-200 border-dashed rounded-[2rem] cursor-pointer bg-slate-50 hover:bg-slate-100 hover:border-orange-200 transition-all group">
-                        <div className="flex flex-col items-center justify-center py-4">
-                          <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform mb-3">
-                            <Plus className="w-6 h-6 text-slate-400" />
-                          </div>
-                          <p className="text-sm text-slate-600 font-bold">Upload Image</p>
-                        </div>
-                        <input 
-                          type="file" 
-                          className="hidden" 
-                          accept="image/*"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = async () => {
-                                const compressed = await compressImage(reader.result as string);
-                                setNewProduct(prev => ({ ...prev, image: compressed }));
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Image 1 — Principale *</p>
+                    <input
+                      required
+                      type="url"
+                      value={newProduct.image}
+                      onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+                      className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-600 transition-all text-sm"
+                      placeholder="https://i.ibb.co/xxxx/image.jpg"
+                    />
+                    {newProduct.image && (
+                      <div className="relative w-full h-40 rounded-[1.5rem] overflow-hidden border border-slate-100 shadow-sm">
+                        <img
+                          src={newProduct.image}
+                          alt="Aperçu"
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
-                      </label>
-                    ) : (
-                      <div className="relative w-full h-48 rounded-[2rem] overflow-hidden border border-slate-100 group shadow-sm">
-                        <img src={newProduct.image} alt="Main Preview" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <button 
-                            type="button"
-                            onClick={() => setNewProduct({ ...newProduct, image: '' })}
-                            className="bg-white text-red-500 p-3 rounded-full hover:bg-red-50 transition-colors shadow-lg"
-                          >
-                            <X className="w-5 h-5" />
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setNewProduct({ ...newProduct, image: '' })}
+                          className="absolute top-2 right-2 bg-white text-red-500 p-2 rounded-full hover:bg-red-50 shadow-lg transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
                     )}
                   </div>
 
                   {/* Image 2 */}
                   <div className="space-y-3">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase text-center">Image 2 (Hover/Angle)</p>
-                    {!newProduct.image2 ? (
-                      <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-slate-200 border-dashed rounded-[2rem] cursor-pointer bg-slate-50 hover:bg-slate-100 hover:border-orange-200 transition-all group">
-                        <div className="flex flex-col items-center justify-center py-4">
-                          <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform mb-3">
-                            <Plus className="w-6 h-6 text-slate-400" />
-                          </div>
-                          <p className="text-sm text-slate-600 font-bold">Upload Optional</p>
-                        </div>
-                        <input 
-                          type="file" 
-                          className="hidden" 
-                          accept="image/*"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = async () => {
-                                const compressed = await compressImage(reader.result as string);
-                                setNewProduct(prev => ({ ...prev, image2: compressed }));
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Image 2 — Hover/Angle (Optionnel)</p>
+                    <input
+                      type="url"
+                      value={newProduct.image2}
+                      onChange={(e) => setNewProduct({ ...newProduct, image2: e.target.value })}
+                      className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-600 transition-all text-sm"
+                      placeholder="https://i.ibb.co/xxxx/image2.jpg"
+                    />
+                    {newProduct.image2 && (
+                      <div className="relative w-full h-40 rounded-[1.5rem] overflow-hidden border border-slate-100 shadow-sm">
+                        <img
+                          src={newProduct.image2}
+                          alt="Aperçu 2"
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
-                      </label>
-                    ) : (
-                      <div className="relative w-full h-48 rounded-[2rem] overflow-hidden border border-slate-100 group shadow-sm">
-                        <img src={newProduct.image2} alt="Hover Preview" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <button 
-                            type="button"
-                            onClick={() => setNewProduct({ ...newProduct, image2: '' })}
-                            className="bg-white text-red-500 p-3 rounded-full hover:bg-red-50 transition-colors shadow-lg"
-                          >
-                            <X className="w-5 h-5" />
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setNewProduct({ ...newProduct, image2: '' })}
+                          className="absolute top-2 right-2 bg-white text-red-500 p-2 rounded-full hover:bg-red-50 shadow-lg transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
                     )}
                   </div>
