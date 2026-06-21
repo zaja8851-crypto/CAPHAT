@@ -55,11 +55,6 @@ interface AppContextType {
   cartTotal: number;
   // Admin stuff
   products: Product[];
-  addProduct: (product: Product) => void;
-  updateProduct: (product: Product) => void;
-  removeProduct: (productId: string) => void;
-  updateProductPrice: (productId: string, newPrice: number) => void;
-  updateProductImages: (productId: string, newImages: string[]) => void;
   orders: Order[];
   addOrder: (order: Omit<Order, 'id' | 'date'>) => void;
   removeOrder: (id: string) => void;
@@ -76,16 +71,14 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>('ar');
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const products = initialProducts;
   const [orders, setOrders] = useState<Order[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load products from API on mount – with module-level cache to avoid refetch on navigation
+  // Load orders and messages from local storage on mount
   useEffect(() => {
-    const now = Date.now();
     const safeParseLocal = (key: string, setter: any) => {
       try {
         const saved = localStorage.getItem(key);
@@ -93,77 +86,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch (e) {}
     };
 
-    // ── Step 1: show products immediately from cache or localStorage ──
-    if (_cache.products && now - _cache.products.ts < CACHE_TTL) {
-      setProducts(_cache.products.data);
-    } else {
-      safeParseLocal('capzone_products', setProducts);
-    }
-
-    // Load local storage backups if available
     safeParseLocal('capzone_orders', setOrders);
     safeParseLocal('capzone_messages', setMessages);
     setIsLoaded(true);
-
-    // ── Step 2: refresh products from KV only if cache is stale and not already fetching ──
-    const needsRefresh = !_cache.products || now - _cache.products.ts >= CACHE_TTL;
-
-    if (!needsRefresh || _isFetching) return;
-    _isFetching = true;
-
-    const fetchProducts = async () => {
-      try {
-        const prodRes = await fetch('/api/products');
-        if (prodRes.ok) {
-          const data = await prodRes.json();
-          if (Array.isArray(data)) {
-            _cache.products = { data, ts: Date.now() };
-            setProducts(data);
-            try {
-              localStorage.setItem('capzone_products', JSON.stringify(data));
-            } catch (e) {}
-          }
-        }
-      } catch (error) {
-        console.error('Products refresh failed:', error);
-      } finally {
-        _isFetching = false;
-      }
-    };
-    fetchProducts();
   }, []);
-
-  const saveProductsToKV = (updatedProducts: Product[], immediate = false) => {
-    _cache.products = { data: updatedProducts, ts: Date.now() };
-    // Reset cache timestamp to 0 so next page load always re-fetches from KV
-    // (we update _cache.products.data immediately so the UI stays correct,
-    //  but force a server re-read on next mount by expiring the timestamp)
-    _isFetching = false;
-    try {
-      localStorage.setItem('capzone_products', JSON.stringify(updatedProducts));
-    } catch (e) {}
-
-    const doSave = () => fetch('/api/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedProducts)
-    }).then(async (res) => {
-      if (!res.ok) throw new Error('Save failed');
-      // After confirmed save, expire cache so next mount re-reads fresh data
-      if (_cache.products) _cache.products.ts = 0;
-    }).catch(err => {
-      console.error('Failed to save products to KV:', err);
-      // Also expire cache on error to force re-read
-      if (_cache.products) _cache.products.ts = 0;
-    });
-
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    if (immediate) {
-      doSave();
-    } else {
-      saveTimeoutRef.current = setTimeout(doSave, 1000);
-    }
-  };
 
   const fetchAdminData = async () => {
     try {
@@ -234,46 +160,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const clearCart = () => setCart([]);
-
-  const addProduct = (product: Product) => {
-    setProducts(prev => {
-      const updated = [...prev, product];
-      saveProductsToKV(updated, true);
-      return updated;
-    });
-  };
-
-  const updateProduct = (updatedProduct: Product) => {
-    setProducts(prev => {
-      const updated = prev.map(p => p.id === updatedProduct.id ? updatedProduct : p);
-      saveProductsToKV(updated, true);
-      return updated;
-    });
-  };
-  
-  const removeProduct = (productId: string) => {
-    setProducts(prev => {
-      const updated = prev.filter(p => p.id !== productId);
-      saveProductsToKV(updated, true);
-      return updated;
-    });
-  };
-
-  const updateProductPrice = (productId: string, newPrice: number) => {
-    setProducts(prev => {
-      const updated = prev.map(p => p.id === productId ? { ...p, price: newPrice } : p);
-      saveProductsToKV(updated);
-      return updated;
-    });
-  };
-
-  const updateProductImages = (productId: string, newImages: string[]) => {
-    setProducts(prev => {
-      const updated = prev.map(p => p.id === productId ? { ...p, image: newImages[0] || '', images: newImages } : p);
-      saveProductsToKV(updated, true);
-      return updated;
-    });
-  };
 
   const addOrder = (orderData: Omit<Order, 'id' | 'date'>) => {
     const newOrder: Order = {
@@ -365,11 +251,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         cartCount,
         cartTotal,
         products,
-        addProduct,
-        updateProduct,
-        removeProduct,
-        updateProductPrice,
-        updateProductImages,
         orders,
         addOrder,
         removeOrder,
