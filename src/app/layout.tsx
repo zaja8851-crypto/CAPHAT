@@ -14,7 +14,7 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "CAPZONE | Premium Caps",
+  title: "HATRIX | Premium Caps",
   description: "High-quality modern caps for youth and style enthusiasts.",
 };
 
@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${cairo.variable}`}>
-      <body className="font-cairo antialiased bg-white text-slate-900 flex flex-col min-h-screen">
+      <body className="font-cairo antialiased bg-black text-white flex flex-col min-h-screen">
         <AppProvider>
           <Header />
           <main className="flex-grow">

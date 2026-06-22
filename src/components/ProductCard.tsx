@@ -22,11 +22,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, priority = fa
   const secondImage = hasSecondImage ? product.images[1] : null;
 
   return (
-    <div className="group relative bg-white rounded-2xl overflow-hidden border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
+    <div className="group relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/10 hover:border-amber-400/40 hover:shadow-xl hover:shadow-amber-400/10 transition-all duration-300">
       <Link
         href={`/product/${product.id}`}
         prefetch={true}
-        className="block aspect-[4/5] relative overflow-hidden bg-slate-50"
+        className="block aspect-[4/5] relative overflow-hidden bg-zinc-800"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -66,12 +66,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, priority = fa
             </div>
           )}
           {product.newArrival && (
-            <div className="bg-orange-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase shadow-lg">
+            <div className="bg-amber-400 text-black text-[10px] font-black px-3 py-1 rounded-full uppercase shadow-lg">
               NEW
             </div>
           )}
           {product.bestSeller && (
-            <div className="bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase shadow-lg">
+            <div className="bg-white text-black text-[10px] font-black px-3 py-1 rounded-full uppercase shadow-lg">
               Best Seller
             </div>
           )}
@@ -79,8 +79,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, priority = fa
         {/* Image dots indicator */}
         {hasSecondImage && (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-            <span className={`block w-1.5 h-1.5 rounded-full transition-all duration-300 ${!isHovered ? 'bg-white scale-110' : 'bg-white/50'}`} />
-            <span className={`block w-1.5 h-1.5 rounded-full transition-all duration-300 ${isHovered ? 'bg-white scale-110' : 'bg-white/50'}`} />
+            <span className={`block w-1.5 h-1.5 rounded-full transition-all duration-300 ${!isHovered ? 'bg-amber-400 scale-110' : 'bg-white/50'}`} />
+            <span className={`block w-1.5 h-1.5 rounded-full transition-all duration-300 ${isHovered ? 'bg-amber-400 scale-110' : 'bg-white/50'}`} />
           </div>
         )}
       </Link>
@@ -88,19 +88,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, priority = fa
       <div className="p-4 sm:p-6">
         <div className="flex justify-between items-start mb-2">
           <Link href={`/product/${product.id}`} prefetch={true} className="block">
-            <h3 className="text-sm font-bold text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-1">
+            <h3 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors line-clamp-1">
               {name}
             </h3>
-            <p className="text-xs text-slate-500 mt-1">{product.type}</p>
+            <p className="text-xs text-white/40 mt-1">{product.type}</p>
           </Link>
           <div className="flex flex-col items-end">
             {product.oldPrice && product.oldPrice > 0 && (
-              <p className="text-[10px] font-bold text-slate-400 line-through">
+              <p className="text-[10px] font-bold text-white/30 line-through">
                 {product.oldPrice} MAD
               </p>
             )}
-            <p className="text-sm font-black text-slate-900 whitespace-nowrap">
-              {product.price} <span className="text-[10px] font-normal uppercase">MAD</span>
+            <p className="text-sm font-black text-amber-400 whitespace-nowrap">
+              {product.price} <span className="text-[10px] font-normal uppercase text-white/50">MAD</span>
             </p>
           </div>
         </div>
@@ -121,7 +121,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, priority = fa
             const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
           }}
-          className="mt-4 w-full flex items-center justify-center space-x-2 rtl:space-x-reverse bg-green-600 text-white py-3 rounded-xl text-xs font-bold hover:bg-green-700 transition-colors shadow-lg shadow-green-600/20"
+          className="mt-4 w-full flex items-center justify-center space-x-2 rtl:space-x-reverse bg-green-600 text-white py-3 rounded-xl text-xs font-bold hover:bg-green-500 transition-colors shadow-lg shadow-green-600/20"
         >
           <MessageCircle className="w-4 h-4" />
           <span>{t.cart.orderWhatsApp}</span>
@@ -130,4 +130,3 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, priority = fa
     </div>
   );
 };
-

@@ -61,7 +61,7 @@ export const translations = {
     footer: {
       privacy: 'Privacy Policy',
       returns: 'Returns Policy',
-      copyright: '© CAPZONE. All rights reserved.',
+      copyright: '© HATRIX. All rights reserved.',
     },
   },
   ar: {
@@ -124,7 +124,7 @@ export const translations = {
     footer: {
       privacy: 'سياسة الخصوصية',
       returns: 'سياسة الاسترجاع',
-      copyright: '© CAPZONE. جميع الحقوق محفوظة.',
+      copyright: '© HATRIX. جميع الحقوق محفوظة.',
     },
   },
   fr: {
@@ -187,7 +187,7 @@ export const translations = {
     footer: {
       privacy: 'Politique de Confidentialité',
       returns: 'Politique de Retour',
-      copyright: '© CAPZONE. Tous droits réservés.',
+      copyright: '© HATRIX. Tous droits réservés.',
     },
   },
 };
