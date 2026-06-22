@@ -192,4 +192,23 @@ export const products: Product[] = [
     descriptionEn: 'Emperio — wear the empire.',
     descriptionAr: 'إمبريو — البس الإمبراطورية.',
   },
+  {
+    id: 'tommy',
+    nameEn: 'TOMMY',
+    nameAr: 'تومي',
+    price: 89,
+    oldPrice: 120,
+    type: 'Snapback',
+    image: 'https://i.ibb.co/ZR2RQ1p6/IMG-20260622-WA0004.jpg',
+    images: [
+      'https://i.ibb.co/ZR2RQ1p6/IMG-20260622-WA0004.jpg',
+    ],
+    colors: ['Standard'],
+    sizes: ['Universal'],
+    bestSeller: false,
+    newArrival: true,
+    promotion: false,
+    descriptionEn: 'TOMMY - premium snapback with modern style.',
+    descriptionAr: 'تومي - قبعة رياضية فاخرة بأسلوب عصري.',
+  },
 ];
