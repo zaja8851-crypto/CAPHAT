@@ -6,7 +6,7 @@ import { ProductCard } from './ProductCard';
 
 export const BestSellers: React.FC = () => {
   const { t, products } = useAppContext();
-  const bestSellers = products.filter(p => p.bestSeller).slice(0, 4);
+  const bestSellers = products.filter(p => p.bestSeller);
 
   return (
     <section className="py-24 bg-black">
@@ -16,7 +16,7 @@ export const BestSellers: React.FC = () => {
           <p className="text-white/50">{t.bestSellers.subtitle}</p>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {bestSellers.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
