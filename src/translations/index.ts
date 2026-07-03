@@ -58,6 +58,14 @@ export const translations = {
     about: {
       text: 'We are a brand specialized in designing high-quality modern caps for youth and style enthusiasts.',
     },
+    specialOffer: {
+      title: 'Double Deal Offer',
+      subtitle: 'Pick any 2 hats of 89 MAD for only 159 MAD!',
+      instruction: 'Select exactly 2 hats from the collection below, then click order to complete your purchase via WhatsApp.',
+      selectedCount: '{count} of 2 selected',
+      orderNow: 'Order Offer Now',
+      onlyFor: 'Offer only applies to hats of 89 MAD',
+    },
     footer: {
       privacy: 'Privacy Policy',
       returns: 'Returns Policy',
@@ -121,6 +129,14 @@ export const translations = {
     about: {
       text: 'نحن علامة متخصصة في تصميم قبعات عصرية عالية الجودة للشباب ومحبي الأناقة.',
     },
+    specialOffer: {
+      title: 'عرض قطعتين بثمن أقل',
+      subtitle: 'اختر أي قبعتين من فئة 89 درهم بـ 159 درهم فقط!',
+      instruction: 'اختر قبعتين من التشكيلة أدناه، ثم اضغط على زر الطلب لإتمام الشراء عبر الواتساب.',
+      selectedCount: 'تم اختيار {count} من 2',
+      orderNow: 'اطلب العرض الآن',
+      onlyFor: 'العرض متوفر للقبعات بقيمة 89 درهم فقط',
+    },
     footer: {
       privacy: 'سياسة الخصوصية',
       returns: 'سياسة الاسترجاع',
@@ -183,6 +199,14 @@ export const translations = {
     },
     about: {
       text: 'Nous sommes une marque spécialisée dans la conception de casquettes modernes de haute qualité pour les jeunes et les passionnés de style.',
+    },
+    specialOffer: {
+      title: 'Offre Double Duo',
+      subtitle: 'Choisissez 2 casquettes de 89 DH pour seulement 159 DH !',
+      instruction: 'Sélectionnez 2 casquettes ci-dessous, puis cliquez sur commander pour finaliser votre achat via WhatsApp.',
+      selectedCount: '{count} sur 2 sélectionnées',
+      orderNow: 'Commander l\'offre maintenant',
+      onlyFor: 'L\'offre s\'applique uniquement aux casquettes de 89 DH',
     },
     footer: {
       privacy: 'Politique de Confidentialité',
